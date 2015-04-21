@@ -5,8 +5,4 @@ pong-command
 
 Type `pong <IP Address>`
 
-```sh
-
->pong 8.8.8.8
-
-```
+![pong](https://cloud.githubusercontent.com/assets/4569916/7252122/e106916e-e86c-11e4-80a7-20ced7232ee1.gif)
