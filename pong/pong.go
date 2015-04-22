@@ -17,6 +17,7 @@ var (
 	score   []int = []int{0, 0}
 	shadow  [][]int
 	ipAddr  string
+	clear   bool = false
 )
 
 const (
@@ -39,7 +40,9 @@ func drawLine(x, y int, str string) {
 func draw() {
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-
+	if clear == true {
+		return
+	}
 	drawLine(WALL_LEFT, WALL_TOP-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
 	drawLine(WALL_LEFT, WALL_TOP, fmt.Sprintf("--------------------------------------------------------------------------------"))
 	drawLine(WALL_LEFT, WALL_BOTTOM, fmt.Sprintf("--------------------------------------------------------------------------------"))
@@ -66,6 +69,8 @@ func keyEvent() {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEsc:
+				clear = true
+				draw()
 				return
 			case termbox.KeyArrowUp:
 				if me_y > WALL_TOP+1 {
@@ -189,11 +194,6 @@ func main() {
 	go moveBall()
 	go moveEnemy()
 	defer termbox.Close()
-
-	defer func() {
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-		termbox.Flush()
-	}()
 
 	keyEvent()
 }
