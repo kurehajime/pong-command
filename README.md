@@ -4,7 +4,7 @@
 
 Type `pong <IP Address>` .
 
-![pong](https://cloud.githubusercontent.com/assets/4569916/7252122/e106916e-e86c-11e4-80a7-20ced7232ee1.gif)
+![pong](https://cloud.githubusercontent.com/assets/4569916/7273449/e6c410be-e92e-11e4-89dd-ba6903089706.gif)
 
 
 ### download
