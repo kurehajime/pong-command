@@ -9,7 +9,7 @@ Type `pong <IP Address>` .
 
 ### download
 
-[pong.exe](https://github.com/kurehajime/pong-command/releases/tag/untagged-80569d41b7169ec6939d)
+[Download here. Windows,OSX,Linux binary](https://github.com/kurehajime/pong-command/releases/tag/0.1)
 
 ### build
 
