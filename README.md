@@ -28,6 +28,8 @@ cp ./pong/<OS>/pong /usr/local/bin/pong
 
 ### 3. pong 
 
+Run command.
+
 `$./pong <IP Address>`
 
 Start game.
