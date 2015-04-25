@@ -30,7 +30,7 @@ cp ./pong/<OS>/pong /usr/local/bin/pong
 
 `$./pong <IP Address>`
 
-result:
+Start game.
 
 ```
 
