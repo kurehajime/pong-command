@@ -2,7 +2,7 @@
 
 ![pong](https://cloud.githubusercontent.com/assets/4569916/7273449/e6c410be-e92e-11e4-89dd-ba6903089706.gif)
 
-Pong-command is a CUI game.
+Pong-command is a CLI game.
 
 ***PO***NG is ***N***ot PIN***G***.
 
