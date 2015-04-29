@@ -69,8 +69,6 @@ EXIT : ESC KEY
 
 ```sh
 
-git clone https://github.com/kurehajime/pong-command.git
-go get -u github.com/nsf/termbox-go
-go build pong-command/pong/pong.go
+ go get -u github.com/kurehajime/pong-command/pong
 
 ```
