@@ -10,7 +10,7 @@ Pong-command is a CLI game.
 
 ### 1. Download
 
- [Download here. Windows,OSX,Linux binary](https://github.com/kurehajime/pong-command/releases/tag/0.1)
+ [Download here. Windows,OSX,Linux binary](https://github.com/kurehajime/pong-command/releases/tag/0.2)
 
 ### 2. Move file or Add directory to PATH
 
