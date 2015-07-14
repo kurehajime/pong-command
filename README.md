@@ -8,7 +8,7 @@ Pong-command is a CLI game.
 
 ## How to use.
 
-### 1. Download
+### 1. Download Win/Mac OSX/Linux binary
 
  [Download here. Windows,OSX,Linux binary](https://github.com/kurehajime/pong-command/releases/tag/0.2)
 
