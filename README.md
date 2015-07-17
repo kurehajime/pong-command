@@ -72,3 +72,7 @@ EXIT : ESC KEY
  go get -u github.com/kurehajime/pong-command/pong
 
 ```
+
+***Caution:***  
+wrong:  go get -u github.com/kurehajime/pong-command  
+right:  go get -u github.com/kurehajime/pong-command**/pong**  
