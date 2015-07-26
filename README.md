@@ -76,3 +76,8 @@ EXIT : ESC KEY
 ***Caution:***  
 wrong:  go get -u github.com/kurehajime/pong-command  
 right:  go get -u github.com/kurehajime/pong-command**/pong**  
+
+## LICENSE
+
+This software is released under the MIT License, see LICENSE.txt.
+
