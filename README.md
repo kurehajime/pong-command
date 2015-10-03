@@ -69,13 +69,13 @@ EXIT : ESC KEY
 
 ```sh
 
- go get -u github.com/kurehajime/pong-command/pong
+ go get -u github.com/kurehajime/pong-command/...
 
 ```
 
 ***Caution:***  
 wrong:  go get -u github.com/kurehajime/pong-command  
-right:  go get -u github.com/kurehajime/pong-command**/pong**  
+right:  go get -u github.com/kurehajime/pong-command**/...**  
 
 ## LICENSE
 
