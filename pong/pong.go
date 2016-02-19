@@ -6,9 +6,11 @@ import (
 	"math/rand"
 	"os"
 	"time"
+  	  "sync"
 )
 
 var (
+    	m *sync.Mutex
 	me_y    int   = 12
 	enemy_y int   = 12
 	ball    []int = []int{40, 12}
@@ -58,7 +60,8 @@ func draw() {
 		drawLine(ME_X, me_y+i, fmt.Sprintf("||"))
 		drawLine(ENEMY_X, enemy_y+i, fmt.Sprintf("||"))
 	}
-
+	m.Lock()
+	defer m.Unlock()
 	termbox.Flush()
 }
 
@@ -185,6 +188,7 @@ func initGame() {
 }
 
 func main() {
+    	m = new(sync.Mutex)
 	initGame()
 	err := termbox.Init()
 	if err != nil {
