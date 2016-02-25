@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/nsf/termbox-go"
 )
 
 var (
-	m      *sync.Mutex
+	flush  = make(chan int)
 	meY    = 12
 	enemyY = 12
 	ball   = []int{40, 12}
@@ -24,13 +23,13 @@ var (
 )
 
 const (
-	WallLeft   = 0
-	WallRight  = 79
-	WallTop    = 1
-	WallBottom = 23
-	MeX        = 76
-	EnemyX     = 2
-	Bar        = 4
+	wallLeft   = 0
+	wallRight  = 79
+	wallTop    = 1
+	wallBottom = 23
+	meX        = 76
+	enemyX     = 2
+	bar        = 4
 )
 
 func drawLine(x, y int, str string) {
@@ -46,10 +45,10 @@ func draw() {
 	if clear == true {
 		return
 	}
-	drawLine(WallLeft, WallTop-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
-	drawLine(WallLeft, WallTop, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(WallLeft, WallBottom, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(WallLeft, WallBottom+1, fmt.Sprintf("EXIT : ESC KEY"))
+	drawLine(wallLeft, wallTop-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
+	drawLine(wallLeft, wallTop, fmt.Sprintf("--------------------------------------------------------------------------------"))
+	drawLine(wallLeft, wallBottom, fmt.Sprintf("--------------------------------------------------------------------------------"))
+	drawLine(wallLeft, wallBottom+1, fmt.Sprintf("EXIT : ESC KEY"))
 	drawLine(ball[0], ball[1], fmt.Sprintf("*"))
 
 	for i := range shadow {
@@ -57,13 +56,21 @@ func draw() {
 
 	}
 
-	for i := 0; i < Bar; i++ {
-		drawLine(MeX, meY+i, fmt.Sprintf("||"))
-		drawLine(EnemyX, enemyY+i, fmt.Sprintf("||"))
+	for i := 0; i < bar; i++ {
+		drawLine(meX, meY+i, fmt.Sprintf("||"))
+		drawLine(enemyX, enemyY+i, fmt.Sprintf("||"))
 	}
-	m.Lock()
-	defer m.Unlock()
-	termbox.Flush()
+	flush <- 1
+}
+
+func termSync() {
+	for {
+		flg := <-flush
+		if flg == -1 {
+			break
+		}
+		termbox.Flush()
+	}
 }
 
 func keyEvent() {
@@ -75,15 +82,17 @@ func keyEvent() {
 			case termbox.KeyEsc:
 				clear = true
 				draw()
+				flush <- -1
 				return
 			case termbox.KeyArrowUp:
-				if meY > WallTop+1 {
+				if meY > wallTop+1 {
 					meY--
 				}
 			case termbox.KeyArrowDown:
-				if meY < WallBottom-Bar {
+				if meY < wallBottom-bar {
 					meY++
 				}
+
 			default:
 			}
 			draw()
@@ -106,16 +115,16 @@ func moveBall() {
 		recMove()
 		draw()
 
-		if ball[1] <= WallTop+1 || ball[1] >= WallBottom-1 {
+		if ball[1] <= wallTop+1 || ball[1] >= wallBottom-1 {
 			vector[1] *= -1
 		}
 
-		if ball[0] <= WallLeft+1 || ball[0] >= WallRight-1 {
+		if ball[0] <= wallLeft+1 || ball[0] >= wallRight-1 {
 			vector[0] *= -1
-			if ball[0] <= WallLeft+1 {
+			if ball[0] <= wallLeft+1 {
 				score[1]++
 			}
-			if ball[0] >= WallRight-1 {
+			if ball[0] >= wallRight-1 {
 				score[0]++
 			}
 			initGame()
@@ -136,10 +145,10 @@ func moveEnemy() {
 
 		vec = ball[1] - (enemyY + 2)
 
-		if enemyY > WallTop+1 && vec < 0 {
+		if enemyY > wallTop+1 && vec < 0 {
 			enemyY--
 		}
-		if enemyY < WallBottom-Bar && vec > 0 {
+		if enemyY < wallBottom-bar && vec > 0 {
 			enemyY++
 		}
 		hitTest()
@@ -159,14 +168,14 @@ func moveEnemy() {
 }
 
 func hitTest() {
-	if vector[0] == 1 && ball[0] > WallRight-10 {
-		if (ball[0] == MeX || ball[0] == MeX-1) && ball[1] >= meY && ball[1] <= meY+Bar {
+	if vector[0] == 1 && ball[0] > wallRight-10 {
+		if (ball[0] == meX || ball[0] == meX-1) && ball[1] >= meY && ball[1] <= meY+bar {
 			vector[0] *= -1
 			level = (level + 1) % 10
 		}
 	}
-	if vector[0] == -1 && ball[0] < WallLeft+10 {
-		if (ball[0] == EnemyX+1 || ball[0] == EnemyX+2) && ball[1] >= enemyY && ball[1] <= enemyY+Bar {
+	if vector[0] == -1 && ball[0] < wallLeft+10 {
+		if (ball[0] == enemyX+1 || ball[0] == enemyX+2) && ball[1] >= enemyY && ball[1] <= enemyY+bar {
 			vector[0] *= -1
 			level = (level + 1) % 10
 		}
@@ -189,7 +198,6 @@ func initGame() {
 }
 
 func main() {
-	m = new(sync.Mutex)
 	initGame()
 	err := termbox.Init()
 	if err != nil {
@@ -198,6 +206,7 @@ func main() {
 
 	go moveBall()
 	go moveEnemy()
+	go termSync()
 	defer termbox.Close()
 
 	keyEvent()
