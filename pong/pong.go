@@ -2,39 +2,40 @@ package main
 
 import (
 	"fmt"
-	"github.com/nsf/termbox-go"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
-  	  "sync"
+
+	"github.com/nsf/termbox-go"
 )
 
 var (
-    	m *sync.Mutex
-	me_y    int   = 12
-	enemy_y int   = 12
-	ball    []int = []int{40, 12}
-	vector  []int = []int{-1, 1}
-	level   int   = 0
-	score   []int = []int{0, 0}
-	shadow  [][]int
-	ipAddr  string
-	clear   bool = false
+	m      *sync.Mutex
+	meY    = 12
+	enemyY = 12
+	ball   = []int{40, 12}
+	vector = []int{-1, 1}
+	level  = 0
+	score  = []int{0, 0}
+	shadow [][]int
+	ipAddr string
+	clear  = false
 )
 
 const (
-	WALL_LEFT   = 0
-	WALL_RIGHT  = 79
-	WALL_TOP    = 1
-	WALL_BOTTOM = 23
-	ME_X        = 76
-	ENEMY_X     = 2
-	BAR         = 4
+	WallLeft   = 0
+	WallRight  = 79
+	WallTop    = 1
+	WallBottom = 23
+	MeX        = 76
+	EnemyX     = 2
+	Bar        = 4
 )
 
 func drawLine(x, y int, str string) {
 	runes := []rune(str)
-	for i := 0; i < len(runes); i += 1 {
+	for i := 0; i < len(runes); i++ {
 		termbox.SetCell(x+i, y, runes[i], termbox.ColorDefault, termbox.ColorDefault)
 	}
 }
@@ -45,20 +46,20 @@ func draw() {
 	if clear == true {
 		return
 	}
-	drawLine(WALL_LEFT, WALL_TOP-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
-	drawLine(WALL_LEFT, WALL_TOP, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(WALL_LEFT, WALL_BOTTOM, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(WALL_LEFT, WALL_BOTTOM+1, fmt.Sprintf("EXIT : ESC KEY"))
+	drawLine(WallLeft, WallTop-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
+	drawLine(WallLeft, WallTop, fmt.Sprintf("--------------------------------------------------------------------------------"))
+	drawLine(WallLeft, WallBottom, fmt.Sprintf("--------------------------------------------------------------------------------"))
+	drawLine(WallLeft, WallBottom+1, fmt.Sprintf("EXIT : ESC KEY"))
 	drawLine(ball[0], ball[1], fmt.Sprintf("*"))
 
-	for i, _ := range shadow {
+	for i := range shadow {
 		drawLine(shadow[i][0], shadow[i][1], fmt.Sprintf(string(ipAddr[len(ipAddr)-i-1])))
 
 	}
 
-	for i := 0; i < BAR; i++ {
-		drawLine(ME_X, me_y+i, fmt.Sprintf("||"))
-		drawLine(ENEMY_X, enemy_y+i, fmt.Sprintf("||"))
+	for i := 0; i < Bar; i++ {
+		drawLine(MeX, meY+i, fmt.Sprintf("||"))
+		drawLine(EnemyX, enemyY+i, fmt.Sprintf("||"))
 	}
 	m.Lock()
 	defer m.Unlock()
@@ -76,12 +77,12 @@ func keyEvent() {
 				draw()
 				return
 			case termbox.KeyArrowUp:
-				if me_y > WALL_TOP+1 {
-					me_y--
+				if meY > WallTop+1 {
+					meY--
 				}
 			case termbox.KeyArrowDown:
-				if me_y < WALL_BOTTOM-BAR {
-					me_y++
+				if meY < WallBottom-Bar {
+					meY++
 				}
 			default:
 			}
@@ -105,16 +106,16 @@ func moveBall() {
 		recMove()
 		draw()
 
-		if ball[1] <= WALL_TOP+1 || ball[1] >= WALL_BOTTOM-1 {
+		if ball[1] <= WallTop+1 || ball[1] >= WallBottom-1 {
 			vector[1] *= -1
 		}
 
-		if ball[0] <= WALL_LEFT+1 || ball[0] >= WALL_RIGHT-1 {
+		if ball[0] <= WallLeft+1 || ball[0] >= WallRight-1 {
 			vector[0] *= -1
-			if ball[0] <= WALL_LEFT+1 {
+			if ball[0] <= WallLeft+1 {
 				score[1]++
 			}
-			if ball[0] >= WALL_RIGHT-1 {
+			if ball[0] >= WallRight-1 {
 				score[0]++
 			}
 			initGame()
@@ -133,13 +134,13 @@ func moveEnemy() {
 	vec := 0
 	for {
 
-		vec = ball[1] - (enemy_y + 2)
+		vec = ball[1] - (enemyY + 2)
 
-		if enemy_y > WALL_TOP+1 && vec < 0 {
-			enemy_y--
+		if enemyY > WallTop+1 && vec < 0 {
+			enemyY--
 		}
-		if enemy_y < WALL_BOTTOM-BAR && vec > 0 {
-			enemy_y++
+		if enemyY < WallBottom-Bar && vec > 0 {
+			enemyY++
 		}
 		hitTest()
 		draw()
@@ -158,14 +159,14 @@ func moveEnemy() {
 }
 
 func hitTest() {
-	if vector[0] == 1 && ball[0] > WALL_RIGHT-10 {
-		if (ball[0] == ME_X || ball[0] == ME_X-1) && ball[1] >= me_y && ball[1] <= me_y+BAR {
+	if vector[0] == 1 && ball[0] > WallRight-10 {
+		if (ball[0] == MeX || ball[0] == MeX-1) && ball[1] >= meY && ball[1] <= meY+Bar {
 			vector[0] *= -1
 			level = (level + 1) % 10
 		}
 	}
-	if vector[0] == -1 && ball[0] < WALL_LEFT+10 {
-		if (ball[0] == ENEMY_X+1 || ball[0] == ENEMY_X+2) && ball[1] >= enemy_y && ball[1] <= enemy_y+BAR {
+	if vector[0] == -1 && ball[0] < WallLeft+10 {
+		if (ball[0] == EnemyX+1 || ball[0] == EnemyX+2) && ball[1] >= enemyY && ball[1] <= enemyY+Bar {
 			vector[0] *= -1
 			level = (level + 1) % 10
 		}
@@ -182,13 +183,13 @@ func initGame() {
 		ipAddr = ""
 	}
 	shadow = make([][]int, len(ipAddr))
-	for i, _ := range shadow {
+	for i := range shadow {
 		shadow[i] = []int{ball[0], ball[1]}
 	}
 }
 
 func main() {
-    	m = new(sync.Mutex)
+	m = new(sync.Mutex)
 	initGame()
 	err := termbox.Init()
 	if err != nil {
