@@ -79,7 +79,7 @@ func keyEvent() {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
-			case termbox.KeyEsc,termbox.KeyCtrlC:
+			case termbox.KeyEsc, termbox.KeyCtrlC:
 				clear = true
 				draw()
 				flush <- -1
