@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	flush  = make(chan int)
 	meY    = 12
 	enemyY = 12
 	ball   = []int{40, 12}
@@ -60,29 +59,17 @@ func draw() {
 		drawLine(meX, meY+i, fmt.Sprintf("||"))
 		drawLine(enemyX, enemyY+i, fmt.Sprintf("||"))
 	}
-	flush <- 1
+	termbox.Flush()
 }
 
-func termSync() {
-	for {
-		flg := <-flush
-		if flg == -1 {
-			break
-		}
-		termbox.Flush()
-	}
-}
-
-func keyEvent() {
-	draw()
+func keyEvent(c chan bool) {
 	for {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEsc, termbox.KeyCtrlC:
 				clear = true
-				draw()
-				flush <- -1
+				c <- false
 				return
 			case termbox.KeyArrowUp:
 				if meY > wallTop+1 {
@@ -95,25 +82,25 @@ func keyEvent() {
 
 			default:
 			}
-			draw()
+			c <- true
 		default:
 		}
 		hitTest()
 	}
 }
 
-func moveBall() {
+func moveBall(c chan bool) {
 	for {
 
 		ball[0] += vector[0]
 		ball[1] += vector[1]
 		hitTest()
-		draw()
+		c <- true
 
 		ball[0] += vector[0]
 		hitTest()
 		recMove()
-		draw()
+		c <- true
 
 		if ball[1] <= wallTop+1 || ball[1] >= wallBottom-1 {
 			vector[1] *= -1
@@ -128,10 +115,10 @@ func moveBall() {
 				score[0]++
 			}
 			initGame()
-			draw()
+			c <- true
 			time.Sleep(time.Duration(500) * time.Millisecond)
 		}
-
+		c <- true
 		time.Sleep(time.Duration(100-level*5) * time.Millisecond)
 	}
 }
@@ -139,7 +126,7 @@ func recMove() {
 	shadow = append(shadow, []int{ball[0], ball[1]})
 	shadow = shadow[1:]
 }
-func moveEnemy() {
+func moveEnemy(c chan bool) {
 	vec := 0
 	for {
 
@@ -152,7 +139,7 @@ func moveEnemy() {
 			enemyY++
 		}
 		hitTest()
-		draw()
+		c <- true
 
 		switch true {
 		case ball[0] < 30:
@@ -204,10 +191,21 @@ func main() {
 		panic(err)
 	}
 
-	go moveBall()
-	go moveEnemy()
-	go termSync()
+	signal := make(chan bool)
+
+	go moveBall(signal)
+	go moveEnemy(signal)
+	go keyEvent(signal)
+
+	for {
+		s := <-signal
+		draw()
+		if s == false {
+			close(signal)
+			break
+		}
+	}
+
 	defer termbox.Close()
 
-	keyEvent()
 }
