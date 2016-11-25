@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	flush  = make(chan int)
 	meY    = 12
 	enemyY = 12
 	ball   = []int{40, 12}
@@ -59,17 +60,29 @@ func draw() {
 		drawLine(meX, meY+i, fmt.Sprintf("||"))
 		drawLine(enemyX, enemyY+i, fmt.Sprintf("||"))
 	}
-	termbox.Flush()
+	flush <- 1
 }
 
-func keyEvent(c chan bool) {
+func termSync() {
+	for {
+		flg := <-flush
+		if flg == -1 {
+			break
+		}
+		termbox.Flush()
+	}
+}
+
+func keyEvent() {
+	draw()
 	for {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEsc, termbox.KeyCtrlC:
 				clear = true
-				c <- false
+				draw()
+				flush <- -1
 				return
 			case termbox.KeyArrowUp:
 				if meY > wallTop+1 {
@@ -82,25 +95,25 @@ func keyEvent(c chan bool) {
 
 			default:
 			}
-			c <- true
+			draw()
 		default:
 		}
 		hitTest()
 	}
 }
 
-func moveBall(c chan bool) {
+func moveBall() {
 	for {
 
 		ball[0] += vector[0]
 		ball[1] += vector[1]
 		hitTest()
-		c <- true
+		draw()
 
 		ball[0] += vector[0]
 		hitTest()
 		recMove()
-		c <- true
+		draw()
 
 		if ball[1] <= wallTop+1 || ball[1] >= wallBottom-1 {
 			vector[1] *= -1
@@ -115,10 +128,10 @@ func moveBall(c chan bool) {
 				score[0]++
 			}
 			initGame()
-			c <- true
+			draw()
 			time.Sleep(time.Duration(500) * time.Millisecond)
 		}
-		c <- true
+
 		time.Sleep(time.Duration(100-level*5) * time.Millisecond)
 	}
 }
@@ -126,7 +139,7 @@ func recMove() {
 	shadow = append(shadow, []int{ball[0], ball[1]})
 	shadow = shadow[1:]
 }
-func moveEnemy(c chan bool) {
+func moveEnemy() {
 	vec := 0
 	for {
 
@@ -139,7 +152,7 @@ func moveEnemy(c chan bool) {
 			enemyY++
 		}
 		hitTest()
-		c <- true
+		draw()
 
 		switch true {
 		case ball[0] < 30:
@@ -191,21 +204,10 @@ func main() {
 		panic(err)
 	}
 
-	signal := make(chan bool)
-
-	go moveBall(signal)
-	go moveEnemy(signal)
-	go keyEvent(signal)
-
-	for {
-		s := <-signal
-		draw()
-		if s == false {
-			close(signal)
-			break
-		}
-	}
-
+	go moveBall()
+	go moveEnemy()
+	go termSync()
 	defer termbox.Close()
 
+	keyEvent()
 }
