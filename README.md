@@ -19,7 +19,7 @@ Pong-command is a CLI game.
 Copy a file into /usr/local/bin 
 
 ```
-cp ./pong/<OS>/pong /usr/local/bin/pong
+cp ./pong /usr/local/bin/pong
 ```
 
 ***Windows :***
