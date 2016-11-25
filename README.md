@@ -65,7 +65,7 @@ EXIT : ESC KEY
 
 ```
 
-## Build yourself
+## ... or go get 
 
 ```sh
 
