@@ -65,7 +65,7 @@ EXIT : ESC KEY
 
 ```
 
-## ... or install by go get 
+## ... or install by 'go get'
 
 ```sh
 
