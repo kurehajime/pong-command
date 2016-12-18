@@ -73,6 +73,10 @@ func drawObj(o Objective) {
 
 // controller
 func controller(s state, kch chan termbox.Key, tch chan bool) {
+	var ballMaxTime = 10
+	var ballTime = ballMaxTime
+	var enemyMaxTime = 3
+	var enemyTime = enemyMaxTime
 	for {
 		select {
 		case key := <-kch: //key event
@@ -86,14 +90,57 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 				s.Player.Move(0, 1)
 				break
 			}
+			s = updateStatus(s)
 			update(s)
 		case <-tch: //time event
-			update(s)
+			ballTime = ballTime - 1
+			if ballTime < 0 {
+				ballTime = ballMaxTime
+				s.Ball.Next()
+				s = updateStatus(s)
+				update(s)
+			}
+			enemyTime = enemyTime - 1
+			if enemyTime < 0 {
+				enemyTime = enemyMaxTime
+				s.Enemy.Move(0, enemyMove(s.Enemy, s.Ball, s.Player))
+			}
 			break
 		default:
 			break
 		}
 	}
+}
+func enemyMove(enemy Objective, ball Objective, player Objective) int {
+	if ball.Point().X <= _width/2 {
+		if enemy.Point().Y < ball.Point().Y {
+			return 1
+		}
+		return -1
+
+	}
+	if enemy.Point().Y < player.Point().Y {
+		return 1
+	}
+	return -1
+}
+func updateStatus(s state) state {
+	if s.Ball.Collision(s.Player) || s.Ball.Collision(s.Enemy) {
+		s.Ball.Prev()
+		s.Ball.Trun(VERTICAL)
+		s.Ball.Next()
+	}
+	if s.Ball.Collision(s.TopLine) || s.Ball.Collision(s.BottomLine) {
+		s.Ball.Prev()
+		s.Ball.Trun(HORIZONAL)
+		s.Ball.Next()
+	}
+	if s.Ball.Collision(s.LeftLine) || s.Ball.Collision(s.RightLine) {
+		s.Ball.Prev()
+		s.Ball.Trun(VERTICAL)
+		s.Ball.Next()
+	}
+	return s
 }
 
 func initState() state {
@@ -105,8 +152,7 @@ func initState() state {
 	s.RightLine = NewCollisionableObject(_width-1, 0, 1, _height, " ")
 	s.Player = NewCollisionableMovableObject(_width-3, _height/2-2, 2, 4, "|", 0, 0)
 	s.Enemy = NewCollisionableMovableObject(1, _height/2-2, 2, 4, "|", 0, 0)
-	s.Ball = NewCollisionableMovableObject(_width/2, _height/2-2, 1, 1, "*", 0, 0)
-
+	s.Ball = NewCollisionableMovableObject(_width/2, _height/2-2, 1, 1, "*", -2, -1)
 	return s
 }
 

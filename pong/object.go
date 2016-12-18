@@ -29,6 +29,7 @@ type Movable interface {
 	Objective
 	Move(int, int)
 	Next()
+	Prev()
 	Turn()
 }
 
@@ -38,6 +39,7 @@ type CollisionableMovable interface {
 	Collision(Collisionable) bool
 	Move(int, int)
 	Next()
+	Prev()
 	Turn()
 }
 
@@ -108,10 +110,17 @@ func (o *MovableObject) Move(addX, addY int) {
 	o.point.Y += addY
 }
 
-//Next get Moved
+//NextY get Moved
 func (o *MovableObject) Next() {
 	o.point.X += o.Arrow.X
-	o.point.Y += o.Arrow.X
+	o.point.Y += o.Arrow.Y
+
+}
+
+//Prev get Move Cancel
+func (o *MovableObject) Prev() {
+	o.point.X -= o.Arrow.X
+	o.point.Y -= o.Arrow.Y
 }
 
 //Trun Trun
