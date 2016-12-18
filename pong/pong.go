@@ -20,7 +20,7 @@ type state struct {
 	ScoreEnemy  int
 }
 
-const (
+var (
 	_temespan = 10
 	_height   = 25
 	_width    = 80
@@ -54,10 +54,10 @@ func update(s state) {
 	drawObj(s.Player)
 	drawObj(s.Enemy)
 	drawObj(s.Ball)
-	drawObj(s.TopLine)
-	drawObj(s.BottomLine)
 	drawObj(s.LeftLine)
 	drawObj(s.RightLine)
+	drawObj(s.TopLine)
+	drawObj(s.BottomLine)
 	termbox.Flush()
 }
 
@@ -98,7 +98,15 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 
 func initState() state {
 	s := state{}
-	s.Player = NewCollisionableMovableObject(_width-3, _height/2, 2, 4, "|", 0, 0)
+	_width, _height = termbox.Size()
+	s.TopLine = NewCollisionableObject(0, 1, _width, 1, "-")
+	s.BottomLine = NewCollisionableObject(0, _height-2, _width, 1, "-")
+	s.LeftLine = NewCollisionableObject(0, 0, 1, _height, " ")
+	s.RightLine = NewCollisionableObject(_width-1, 0, 1, _height, " ")
+	s.Player = NewCollisionableMovableObject(_width-3, _height/2-2, 2, 4, "|", 0, 0)
+	s.Enemy = NewCollisionableMovableObject(1, _height/2-2, 2, 4, "|", 0, 0)
+	s.Ball = NewCollisionableMovableObject(_width/2, _height/2-2, 1, 1, "*", 0, 0)
+
 	return s
 }
 
