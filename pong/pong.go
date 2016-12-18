@@ -20,7 +20,11 @@ type state struct {
 	ScoreEnemy  int
 }
 
-const _temespan = 10
+const (
+	_temespan = 10
+	_height   = 25
+	_width    = 80
+)
 
 //timer event
 func timerLoop(tch chan bool) {
@@ -94,6 +98,7 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 
 func initState() state {
 	s := state{}
+	s.Player = NewCollisionableMovableObject(_width-3, _height/2, 2, 4, "|", 0, 0)
 	return s
 }
 
