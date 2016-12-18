@@ -1,213 +1,80 @@
+// pong.go
 package main
 
-import (
-	"fmt"
-	"math/rand"
-	"os"
-	"time"
+type Point struct {
+	X int
+	Y int
+}
 
-	"github.com/nsf/termbox-go"
-)
+type Size struct {
+	Width  int
+	Height int
+}
 
-var (
-	flush  = make(chan int)
-	meY    = 12
-	enemyY = 12
-	ball   = []int{40, 12}
-	vector = []int{-1, 1}
-	level  = 0
-	score  = []int{0, 0}
-	shadow [][]int
-	ipAddr string
-	clear  = false
-)
+type Object interface {
+	Point() Point
+	Size() Size
+	Collision(Object) bool
+	Next(int, int) Object
+	Str() string
+}
 
-const (
-	wallLeft   = 0
-	wallRight  = 79
-	wallTop    = 1
-	wallBottom = 23
-	meX        = 76
-	enemyX     = 2
-	bar        = 4
-)
+type object struct {
+	point Point
+	size  Size
+	str   string
+}
 
-func drawLine(x, y int, str string) {
-	runes := []rune(str)
-	for i := 0; i < len(runes); i++ {
-		termbox.SetCell(x+i, y, runes[i], termbox.ColorDefault, termbox.ColorDefault)
+func NewObject(x, y, w, h int, s string) object {
+	return object{
+		point: Point{X: x, Y: y},
+		size:  Size{Width: w, Height: h},
+		str:   s,
 	}
 }
 
-func draw() {
-
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	if clear == true {
-		return
-	}
-	drawLine(wallLeft, wallTop-1, fmt.Sprintf("                                                                     %03d - %03d", score[0], score[1]))
-	drawLine(wallLeft, wallTop, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(wallLeft, wallBottom, fmt.Sprintf("--------------------------------------------------------------------------------"))
-	drawLine(wallLeft, wallBottom+1, fmt.Sprintf("EXIT : ESC KEY"))
-	drawLine(ball[0], ball[1], fmt.Sprintf("*"))
-
-	for i := range shadow {
-		drawLine(shadow[i][0], shadow[i][1], fmt.Sprintf(string(ipAddr[len(ipAddr)-i-1])))
-
-	}
-
-	for i := 0; i < bar; i++ {
-		drawLine(meX, meY+i, fmt.Sprintf("||"))
-		drawLine(enemyX, enemyY+i, fmt.Sprintf("||"))
-	}
-	flush <- 1
+func (o object) Point() Point {
+	return o.point
 }
 
-func termSync() {
-	for {
-		flg := <-flush
-		if flg == -1 {
-			break
-		}
-		termbox.Flush()
-	}
+func (o object) Size() Size {
+	return o.size
 }
 
-func keyEvent() {
-	draw()
-	for {
-		switch ev := termbox.PollEvent(); ev.Type {
-		case termbox.EventKey:
-			switch ev.Key {
-			case termbox.KeyEsc, termbox.KeyCtrlC:
-				clear = true
-				draw()
-				flush <- -1
-				return
-			case termbox.KeyArrowUp:
-				if meY > wallTop+1 {
-					meY--
-				}
-			case termbox.KeyArrowDown:
-				if meY < wallBottom-bar {
-					meY++
-				}
-
-			default:
-			}
-			draw()
-		default:
-		}
-		hitTest()
+func (o1 object) Collision(o2 Object) bool {
+	points1 := []Point{
+		Point{X: o1.Point().X, Y: o1.Point().Y},
+		Point{X: o1.Point().X + o1.Size().Width - 1, Y: o1.Point().Y + o1.Size().Height - 1},
+		Point{X: o1.Point().X + o1.Size().Width - 1, Y: o1.Point().Y},
+		Point{X: o1.Point().X, Y: o1.Point().Y + o1.Size().Height - 1},
 	}
+	points2 := []Point{
+		Point{X: o2.Point().X, Y: o2.Point().Y},
+		Point{X: o2.Point().X + o2.Size().Width - 1, Y: o2.Point().Y + o2.Size().Height - 1},
+		Point{X: o2.Point().X + o2.Size().Width - 1, Y: o2.Point().Y},
+		Point{X: o2.Point().X, Y: o2.Point().Y + o2.Size().Height - 1},
+	}
+	for i := range points2 {
+		if o1.Point().X <= points2[i].X && o1.Point().X+o1.Size().Width-1 >= points2[i].X &&
+			o1.Point().Y <= points2[i].Y && o1.Point().Y+o1.Size().Height-1 >= points2[i].Y {
+			return true
+		}
+	}
+	for i := range points1 {
+		if o2.Point().X <= points1[i].X && o2.Point().X+o2.Size().Width-1 >= points1[i].X &&
+			o2.Point().Y <= points1[i].Y && o2.Point().Y+o2.Size().Height-1 >= points1[i].Y {
+			return true
+		}
+	}
+	return false
 }
 
-func moveBall() {
-	for {
-
-		ball[0] += vector[0]
-		ball[1] += vector[1]
-		hitTest()
-		draw()
-
-		ball[0] += vector[0]
-		hitTest()
-		recMove()
-		draw()
-
-		if ball[1] <= wallTop+1 || ball[1] >= wallBottom-1 {
-			vector[1] *= -1
-		}
-
-		if ball[0] <= wallLeft+1 || ball[0] >= wallRight-1 {
-			vector[0] *= -1
-			if ball[0] <= wallLeft+1 {
-				score[1]++
-			}
-			if ball[0] >= wallRight-1 {
-				score[0]++
-			}
-			initGame()
-			draw()
-			time.Sleep(time.Duration(500) * time.Millisecond)
-		}
-
-		time.Sleep(time.Duration(100-level*5) * time.Millisecond)
-	}
-}
-func recMove() {
-	shadow = append(shadow, []int{ball[0], ball[1]})
-	shadow = shadow[1:]
-}
-func moveEnemy() {
-	vec := 0
-	for {
-
-		vec = ball[1] - (enemyY + 2)
-
-		if enemyY > wallTop+1 && vec < 0 {
-			enemyY--
-		}
-		if enemyY < wallBottom-bar && vec > 0 {
-			enemyY++
-		}
-		hitTest()
-		draw()
-
-		switch true {
-		case ball[0] < 30:
-			time.Sleep(100 * time.Millisecond)
-		case ball[0] < 50:
-			time.Sleep(150 * time.Millisecond)
-		case ball[0] < 80:
-			time.Sleep(180 * time.Millisecond)
-		default:
-			time.Sleep(200 * time.Millisecond)
-		}
-	}
+func (o object) Next(addX, addY int) Object {
+	o.point.X += addX
+	o.point.Y += addY
+	return o
 }
 
-func hitTest() {
-	if vector[0] == 1 && ball[0] > wallRight-10 {
-		if (ball[0] == meX || ball[0] == meX-1) && ball[1] >= meY && ball[1] <= meY+bar {
-			vector[0] *= -1
-			level = (level + 1) % 10
-		}
-	}
-	if vector[0] == -1 && ball[0] < wallLeft+10 {
-		if (ball[0] == enemyX+1 || ball[0] == enemyX+2) && ball[1] >= enemyY && ball[1] <= enemyY+bar {
-			vector[0] *= -1
-			level = (level + 1) % 10
-		}
-	}
-}
-
-func initGame() {
-	level = 0
-	rand.Seed(time.Now().UnixNano())
-	ball = []int{40, 5 + rand.Intn(15)}
-	if len(os.Args) >= 2 {
-		ipAddr = os.Args[1]
-	} else {
-		ipAddr = ""
-	}
-	shadow = make([][]int, len(ipAddr))
-	for i := range shadow {
-		shadow[i] = []int{ball[0], ball[1]}
-	}
-}
-
-func main() {
-	initGame()
-	err := termbox.Init()
-	if err != nil {
-		panic(err)
-	}
-
-	go moveBall()
-	go moveEnemy()
-	go termSync()
-	defer termbox.Close()
-
-	keyEvent()
+func (o object) Str() string {
+	return o.str
 }
