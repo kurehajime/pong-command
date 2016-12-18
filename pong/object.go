@@ -110,7 +110,7 @@ func (o *MovableObject) Move(addX, addY int) {
 	o.point.Y += addY
 }
 
-//NextY get Moved
+//Next get Moved
 func (o *MovableObject) Next() {
 	o.point.X += o.Arrow.X
 	o.point.Y += o.Arrow.Y
@@ -123,8 +123,8 @@ func (o *MovableObject) Prev() {
 	o.point.Y -= o.Arrow.Y
 }
 
-//Trun Trun
-func (o *MovableObject) Trun(a Alignment) {
+//Turn Turn
+func (o *MovableObject) Turn(a Alignment) {
 	if a == VERTICAL {
 		o.Arrow.X = -1 * o.Arrow.X
 	} else {

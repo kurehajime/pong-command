@@ -2,7 +2,11 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"time"
+
+	"math/rand"
 
 	"github.com/nsf/termbox-go"
 )
@@ -18,6 +22,7 @@ type state struct {
 	RightLine   CollisionableObject
 	ScorePlayer int
 	ScoreEnemy  int
+	Count       int
 }
 
 var (
@@ -51,13 +56,15 @@ func update(s state) {
 	for i := range s.Shadows {
 		drawObj(s.Shadows[i])
 	}
-	drawObj(s.Player)
-	drawObj(s.Enemy)
 	drawObj(s.Ball)
 	drawObj(s.LeftLine)
 	drawObj(s.RightLine)
 	drawObj(s.TopLine)
 	drawObj(s.BottomLine)
+	drawLine(1, 0, "EXIT : ESC KEY")
+	drawLine(_width-10, 0, fmt.Sprintf("%03d - %03d", s.ScoreEnemy, s.ScorePlayer))
+	drawObj(s.Player)
+	drawObj(s.Enemy)
 	termbox.Flush()
 }
 
@@ -71,11 +78,19 @@ func drawObj(o Objective) {
 	}
 }
 
+//drawLine
+func drawLine(x, y int, str string) {
+	runes := []rune(str)
+	for i := 0; i < len(runes); i++ {
+		termbox.SetCell(x+i, y, runes[i], termbox.ColorDefault, termbox.ColorDefault)
+	}
+}
+
 // controller
 func controller(s state, kch chan termbox.Key, tch chan bool) {
-	var ballMaxTime = 10
+	var ballMaxTime = 9
 	var ballTime = ballMaxTime
-	var enemyMaxTime = 3
+	var enemyMaxTime = 7
 	var enemyTime = enemyMaxTime
 	for {
 		select {
@@ -91,54 +106,76 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 				break
 			}
 			s = updateStatus(s)
-			update(s)
 		case <-tch: //time event
 			ballTime = ballTime - 1
 			if ballTime < 0 {
-				ballTime = ballMaxTime
+				ballTime = ballMaxTime - int(math.Min(float64(s.Count), 8))
+				prevX := s.Ball.Point().X
 				s.Ball.Next()
+				nextX := s.Ball.Point().X
 				s = updateStatus(s)
-				update(s)
+				if _width/2 >= s.Ball.Point().X && prevX < nextX {
+					s.Ball.Move(1, 0)
+					s = updateStatus(s)
+				} else if _width/2 <= s.Ball.Point().X && prevX > nextX {
+					s.Ball.Move(-1, 0)
+					s = updateStatus(s)
+				}
 			}
 			enemyTime = enemyTime - 1
 			if enemyTime < 0 {
 				enemyTime = enemyMaxTime
 				s.Enemy.Move(0, enemyMove(s.Enemy, s.Ball, s.Player))
+				s = updateStatus(s)
 			}
 			break
 		default:
 			break
 		}
+		update(s)
 	}
 }
 func enemyMove(enemy Objective, ball Objective, player Objective) int {
 	if ball.Point().X <= _width/2 {
-		if enemy.Point().Y < ball.Point().Y {
+		if enemy.Point().Y+2 < ball.Point().Y {
 			return 1
+		} else if enemy.Point().Y+2 > ball.Point().Y {
+			return -1
 		}
-		return -1
-
+		return 0
 	}
-	if enemy.Point().Y < player.Point().Y {
+	p := (player.Point().Y + ball.Point().Y) / 2
+	if int(math.Abs(float64(enemy.Point().Y-p))) < 1 {
+		return 0
+	} else if enemy.Point().Y <= p {
 		return 1
+	} else if enemy.Point().Y >= p {
+		return -1
 	}
-	return -1
+	return 0
 }
 func updateStatus(s state) state {
 	if s.Ball.Collision(s.Player) || s.Ball.Collision(s.Enemy) {
 		s.Ball.Prev()
-		s.Ball.Trun(VERTICAL)
+		s.Ball.Turn(VERTICAL)
 		s.Ball.Next()
+		s.Count++
 	}
 	if s.Ball.Collision(s.TopLine) || s.Ball.Collision(s.BottomLine) {
 		s.Ball.Prev()
-		s.Ball.Trun(HORIZONAL)
+		s.Ball.Turn(HORIZONAL)
 		s.Ball.Next()
 	}
-	if s.Ball.Collision(s.LeftLine) || s.Ball.Collision(s.RightLine) {
-		s.Ball.Prev()
-		s.Ball.Trun(VERTICAL)
-		s.Ball.Next()
+	if s.Ball.Collision(s.LeftLine) {
+		s.Ball = inirBall()
+		s.ScorePlayer++
+		s.Count = 0
+	}
+
+	if s.Ball.Collision(s.RightLine) {
+		s.Ball = inirBall()
+		s.ScoreEnemy++
+		s.Count = 0
 	}
 	return s
 }
@@ -152,10 +189,20 @@ func initState() state {
 	s.RightLine = NewCollisionableObject(_width-1, 0, 1, _height, " ")
 	s.Player = NewCollisionableMovableObject(_width-3, _height/2-2, 2, 4, "|", 0, 0)
 	s.Enemy = NewCollisionableMovableObject(1, _height/2-2, 2, 4, "|", 0, 0)
-	s.Ball = NewCollisionableMovableObject(_width/2, _height/2-2, 1, 1, "*", -2, -1)
+	s.Ball = inirBall()
 	return s
 }
-
+func inirBall() CollisionableMovableObject {
+	rand.Seed(time.Now().UnixNano())
+	r1 := rand.Intn(_height / 3)
+	vec := 0
+	if rand.Intn(100) <= 50 {
+		vec = 1
+	} else {
+		vec = -1
+	}
+	return NewCollisionableMovableObject(_width/2, _height/3+r1, 1, 1, "*", -1, vec)
+}
 func start() {
 	err := termbox.Init()
 	if err != nil {
