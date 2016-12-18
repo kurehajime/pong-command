@@ -1,80 +1,116 @@
-// pong.go
+//pong.go
 package main
 
-type Point struct {
-	X int
-	Y int
+import (
+	"time"
+
+	"github.com/nsf/termbox-go"
+)
+
+type state struct {
+	Player      CollisionableMovableObject
+	Enemy       CollisionableMovableObject
+	Ball        CollisionableMovableObject
+	Shadows     []MovableObject
+	TopLine     CollisionableObject
+	BottomLine  CollisionableObject
+	LeftLine    CollisionableObject
+	RightLine   CollisionableObject
+	ScorePlayer int
+	ScoreEnemy  int
 }
 
-type Size struct {
-	Width  int
-	Height int
-}
+const _temespan = 10
 
-type Object interface {
-	Point() Point
-	Size() Size
-	Collision(Object) bool
-	Next(int, int) Object
-	Str() string
-}
-
-type object struct {
-	point Point
-	size  Size
-	str   string
-}
-
-func NewObject(x, y, w, h int, s string) object {
-	return object{
-		point: Point{X: x, Y: y},
-		size:  Size{Width: w, Height: h},
-		str:   s,
+//timer event
+func timerLoop(tch chan bool) {
+	for {
+		tch <- true
+		time.Sleep(time.Duration(_temespan) * time.Millisecond)
 	}
 }
 
-func (o object) Point() Point {
-	return o.point
-}
-
-func (o object) Size() Size {
-	return o.size
-}
-
-func (o1 object) Collision(o2 Object) bool {
-	points1 := []Point{
-		Point{X: o1.Point().X, Y: o1.Point().Y},
-		Point{X: o1.Point().X + o1.Size().Width - 1, Y: o1.Point().Y + o1.Size().Height - 1},
-		Point{X: o1.Point().X + o1.Size().Width - 1, Y: o1.Point().Y},
-		Point{X: o1.Point().X, Y: o1.Point().Y + o1.Size().Height - 1},
-	}
-	points2 := []Point{
-		Point{X: o2.Point().X, Y: o2.Point().Y},
-		Point{X: o2.Point().X + o2.Size().Width - 1, Y: o2.Point().Y + o2.Size().Height - 1},
-		Point{X: o2.Point().X + o2.Size().Width - 1, Y: o2.Point().Y},
-		Point{X: o2.Point().X, Y: o2.Point().Y + o2.Size().Height - 1},
-	}
-	for i := range points2 {
-		if o1.Point().X <= points2[i].X && o1.Point().X+o1.Size().Width-1 >= points2[i].X &&
-			o1.Point().Y <= points2[i].Y && o1.Point().Y+o1.Size().Height-1 >= points2[i].Y {
-			return true
+//key events
+func keyEventLoop(kch chan termbox.Key) {
+	for {
+		switch ev := termbox.PollEvent(); ev.Type {
+		case termbox.EventKey:
+			kch <- ev.Key
+		default:
 		}
 	}
-	for i := range points1 {
-		if o2.Point().X <= points1[i].X && o2.Point().X+o2.Size().Width-1 >= points1[i].X &&
-			o2.Point().Y <= points1[i].Y && o2.Point().Y+o2.Size().Height-1 >= points1[i].Y {
-			return true
+}
+
+//draw console
+func update(s state) {
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	for i := range s.Shadows {
+		drawObj(s.Shadows[i])
+	}
+	drawObj(s.Player)
+	drawObj(s.Enemy)
+	drawObj(s.Ball)
+	drawObj(s.TopLine)
+	drawObj(s.BottomLine)
+	drawObj(s.LeftLine)
+	drawObj(s.RightLine)
+	termbox.Flush()
+}
+
+//draw object
+func drawObj(o Objective) {
+	for w := 0; w < o.Size().Width; w++ {
+		for h := 0; h < o.Size().Height; h++ {
+			termbox.SetCell(o.Point().X+w, o.Point().Y+h,
+				[]rune(o.Str())[0], termbox.ColorDefault, termbox.ColorDefault)
 		}
 	}
-	return false
 }
 
-func (o object) Next(addX, addY int) Object {
-	o.point.X += addX
-	o.point.Y += addY
-	return o
+// controller
+func controller(s state, kch chan termbox.Key, tch chan bool) {
+	for {
+		select {
+		case key := <-kch: //key event
+			switch key {
+			case termbox.KeyEsc, termbox.KeyCtrlC: //game end
+				return
+			case termbox.KeyArrowUp:
+				s.Player.Move(0, -1)
+				break
+			case termbox.KeyArrowDown:
+				s.Player.Move(0, 1)
+				break
+			}
+			update(s)
+		case <-tch: //time event
+			update(s)
+			break
+		default:
+			break
+		}
+	}
 }
 
-func (o object) Str() string {
-	return o.str
+func initState() state {
+	s := state{}
+	return s
+}
+
+func start() {
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	s := initState()
+
+	kch := make(chan termbox.Key)
+	tch := make(chan bool)
+	go keyEventLoop(kch)
+	go timerLoop(tch)
+	controller(s, kch, tch)
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+
+	defer termbox.Close()
 }
