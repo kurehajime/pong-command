@@ -1,6 +1,12 @@
 // main.go
 package main
 
+import "os"
+
 func main() {
-	start("192.168.1.1")
+	ipAddr := "*"
+	if len(os.Args) >= 2 {
+		ipAddr = os.Args[1]
+	}
+	start(ipAddr)
 }
