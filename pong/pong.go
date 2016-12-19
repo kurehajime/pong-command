@@ -53,10 +53,10 @@ func keyEventLoop(kch chan termbox.Key) {
 //draw console
 func update(s state) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	drawObj(s.Ball)
 	for i := range s.Shadows {
 		drawObj(s.Shadows[i])
 	}
-	drawObj(s.Ball)
 	drawObj(s.LeftLine)
 	drawObj(s.RightLine)
 	drawObj(s.TopLine)
@@ -112,6 +112,7 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 				ballTime = ballMaxTime - int(math.Min(float64(s.Count), 8))
 				prevX := s.Ball.Point().X
 				s.Ball.Next()
+				s.Shadows = nextShadow(s.Shadows, s.Ball)
 				nextX := s.Ball.Point().X
 				s = updateStatus(s)
 				if _width/2 >= s.Ball.Point().X && prevX < nextX {
@@ -135,6 +136,8 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 		update(s)
 	}
 }
+
+//enemyMove
 func enemyMove(enemy Objective, ball Objective, player Objective) int {
 	if ball.Point().X <= _width/2 {
 		if enemy.Point().Y+2 < ball.Point().Y {
@@ -154,17 +157,23 @@ func enemyMove(enemy Objective, ball Objective, player Objective) int {
 	}
 	return 0
 }
+
+//updateStatus
 func updateStatus(s state) state {
 	if s.Ball.Collision(s.Player) || s.Ball.Collision(s.Enemy) {
 		s.Ball.Prev()
+		s.Shadows = nextShadow(s.Shadows, s.Ball)
 		s.Ball.Turn(VERTICAL)
 		s.Ball.Next()
+		s.Shadows = nextShadow(s.Shadows, s.Ball)
 		s.Count++
 	}
 	if s.Ball.Collision(s.TopLine) || s.Ball.Collision(s.BottomLine) {
 		s.Ball.Prev()
+		s.Shadows = nextShadow(s.Shadows, s.Ball)
 		s.Ball.Turn(HORIZONAL)
 		s.Ball.Next()
+		s.Shadows = nextShadow(s.Shadows, s.Ball)
 	}
 	if s.Ball.Collision(s.LeftLine) {
 		s.Ball = inirBall()
@@ -180,7 +189,8 @@ func updateStatus(s state) state {
 	return s
 }
 
-func initState() state {
+//initState
+func initState(keyword string) state {
 	s := state{}
 	_width, _height = termbox.Size()
 	s.TopLine = NewCollisionableObject(0, 1, _width, 1, "-")
@@ -190,8 +200,25 @@ func initState() state {
 	s.Player = NewCollisionableMovableObject(_width-3, _height/2-2, 2, 4, "|", 0, 0)
 	s.Enemy = NewCollisionableMovableObject(1, _height/2-2, 2, 4, "|", 0, 0)
 	s.Ball = inirBall()
+	for i := range keyword {
+		s.Shadows = append(s.Shadows, NewMovableObject(s.Ball.Point().X, s.Ball.Point().Y, s.Ball.Size().Width, s.Ball.Size().Height, string(keyword[i]), 0, 0))
+	}
 	return s
 }
+
+//nextShadow
+func nextShadow(shadow []MovableObject, ball CollisionableMovableObject) []MovableObject {
+	for i := len(shadow) - 1; i >= 0; i-- {
+		if i == 0 {
+			shadow[i] = NewMovableObject(ball.Point().X, ball.Point().Y, 1, 1, shadow[i].Str(), 0, 0)
+		} else {
+			shadow[i] = NewMovableObject(shadow[i-1].Point().X, shadow[i-1].Point().Y, 1, 1, shadow[i].Str(), 0, 0)
+		}
+	}
+	return shadow
+}
+
+//inirBall
 func inirBall() CollisionableMovableObject {
 	rand.Seed(time.Now().UnixNano())
 	r1 := rand.Intn(_height / 3)
@@ -201,15 +228,17 @@ func inirBall() CollisionableMovableObject {
 	} else {
 		vec = -1
 	}
-	return NewCollisionableMovableObject(_width/2, _height/3+r1, 1, 1, "*", -1, vec)
+	return NewCollisionableMovableObject(_width/2, _height/3+r1, 1, 1, " ", -1, vec)
 }
-func start() {
+
+//start
+func start(keyword string) {
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
 	}
 
-	s := initState()
+	s := initState(keyword)
 
 	kch := make(chan termbox.Key)
 	tch := make(chan bool)
