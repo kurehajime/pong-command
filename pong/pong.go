@@ -110,18 +110,7 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 			ballTime = ballTime - 1
 			if ballTime < 0 {
 				ballTime = ballMaxTime - int(math.Min(float64(s.Count), 8))
-				prevX := s.Ball.Point().X
-				s.Ball.Next()
-				s.Shadows = nextShadow(s.Shadows, s.Ball)
-				nextX := s.Ball.Point().X
-				s = updateStatus(s)
-				if _width/2 >= s.Ball.Point().X && prevX < nextX {
-					s.Ball.Move(1, 0)
-					s = updateStatus(s)
-				} else if _width/2 <= s.Ball.Point().X && prevX > nextX {
-					s.Ball.Move(-1, 0)
-					s = updateStatus(s)
-				}
+				s = ballMove(s)
 			}
 			enemyTime = enemyTime - 1
 			if enemyTime < 0 {
@@ -135,6 +124,23 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 		}
 		update(s)
 	}
+}
+
+//ballMove
+func ballMove(s state) state {
+	prevX := s.Ball.Point().X
+	s.Ball.Next()
+	s.Shadows = nextShadow(s.Shadows, s.Ball)
+	nextX := s.Ball.Point().X
+	s = updateStatus(s)
+	if _width/2 >= s.Ball.Point().X && prevX < nextX {
+		s.Ball.Move(1, 0)
+		s = updateStatus(s)
+	} else if _width/2 <= s.Ball.Point().X && prevX > nextX {
+		s.Ball.Move(-1, 0)
+		s = updateStatus(s)
+	}
+	return s
 }
 
 //enemyMove
