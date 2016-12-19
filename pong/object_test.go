@@ -29,21 +29,15 @@ func TestCollisionable(t *testing.T) {
 }
 func TestMovable(t *testing.T) {
 	o := NewMovableObject(0, 0, 1, 1, "*", 1, 1)
-	o.NextX()
-	o.NextY()
-
-	o.NextX()
-	o.NextY()
-
-	o.NextX()
-	o.NextY()
+	o.Next()
+	o.Next()
+	o.Next()
 
 	if o.Point().X != 3 && o.Point().Y != 3 {
 		t.Errorf("3,3!=%d,%d", o.Point().X, o.Point().Y)
 	}
-	o.Trun(HORIZONAL)
-	o.NextX()
-	o.NextY()
+	o.Turn(HORIZONAL)
+	o.Next()
 
 	if o.Point().X != 4 && o.Point().Y != 2 {
 		t.Errorf("4,2!=%d,%d", o.Point().X, o.Point().Y)
