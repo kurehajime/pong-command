@@ -4,7 +4,7 @@
 
 Pong-command is a CLI game.
 
-***PO***NG is ***N***ot PIN***G***.
+**PO**ng is **N**ot pin**G**.
 
 ## How to use.
 
