@@ -65,11 +65,11 @@ EXIT : ESC KEY
 
 ```
 
-## ... or install by 'go get'
+## ... or install by 'go install'
 
 ```sh
 
- go get -u github.com/kurehajime/pong-command/...
+go install github.com/kurehajime/pong-command/pong@latest
 
 ```
 
