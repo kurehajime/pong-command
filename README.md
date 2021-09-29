@@ -73,19 +73,6 @@ go install github.com/kurehajime/pong-command/pong@latest
 
 ```
 
-***Caution:***  
-wrong:  go get -u github.com/kurehajime/pong-command  
-right:  go get -u github.com/kurehajime/pong-command/...  
-
-Do not work? Please try it.
-
-```sh
-
- GO111MODULE=off go get -u github.com/kurehajime/pong-command/...
-
-```
-
-
 ## LICENSE
 
 This software is released under the MIT License, see LICENSE.txt.
