@@ -1,6 +1,6 @@
 builds:
   - main: ./pong
-    id: pong
+    binary: pong
     env:
       - CGO_ENABLED=0
     goos:
@@ -9,6 +9,8 @@ builds:
       - darwin
 archives:
   - format: zip
+    replacements:
+      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
