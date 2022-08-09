@@ -1,5 +1,6 @@
 builds:
   - main: ./pong
+    id: pong
     env:
       - CGO_ENABLED=0
     goos:
