@@ -1,4 +1,4 @@
-//pong.go
+// pong.go
 package main
 
 import (
