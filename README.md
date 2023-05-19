@@ -30,7 +30,13 @@ cp ./pong /usr/local/bin/pong
 
 Run command.
 
-`$./pong <IP Address>`
+```sh
+$ ./pong [OPTIONS]
+
+OPTIONS
+    -ball=BALL         The characters to play with
+    -target=TARGET     The score which stops the game when reached. A target of 0 means the game runs forever.
+```
 
 Start game.
 

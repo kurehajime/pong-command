@@ -123,11 +123,13 @@ func controller(s state, kch chan termbox.Key, tch chan bool) string {
 		default:
 			break
 		}
-        if s.ScorePlayer >= s.Target {
-            return fmt.Sprintf("You won! The final score was %d-%d", s.ScorePlayer, s.ScoreEnemy)
-        }
-        if s.ScoreEnemy >= s.Target {
-            return fmt.Sprintf("You lost! The final score was %d-%d", s.ScoreEnemy, s.ScorePlayer)
+        if s.Target > 0 {
+            if s.ScorePlayer >= s.Target {
+                return fmt.Sprintf("You won! The final score was %d-%d", s.ScorePlayer, s.ScoreEnemy)
+            }
+            if s.ScoreEnemy >= s.Target {
+                return fmt.Sprintf("You lost! The final score was %d-%d", s.ScoreEnemy, s.ScorePlayer)
+            }
         }
 		update(s)
 	}
