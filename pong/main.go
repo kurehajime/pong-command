@@ -1,12 +1,11 @@
 // main.go
 package main
 
-import "os"
+import "flag"
 
 func main() {
-	ipAddr := "*"
-	if len(os.Args) >= 2 {
-		ipAddr = os.Args[1]
-	}
-	start(ipAddr)
+	ipAddr := flag.String("ball", "*", "the characters representing the ball")
+    target := flag.Int("target", 0, "the first to reach this score wins. 0 means the game is infinite")
+    flag.Parse()
+	start(*ipAddr, *target)
 }
