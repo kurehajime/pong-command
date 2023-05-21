@@ -28,15 +28,12 @@ cp ./pong /usr/local/bin/pong
 
 ### 3. pong 
 
-Run command.
+Run command. 
 
 ```sh
-$ ./pong [OPTIONS]
-
-OPTIONS
-    -ball=BALL         The characters to play with
-    -target=TARGET     The score which stops the game when reached. A target of 0 means the game runs forever.
+$ ./pong [IP ADDRESS] [TARGET]
 ```
+Target is the score to stop the game at. If not provided, the game runs forever.
 
 Start game.
 

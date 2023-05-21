@@ -1,11 +1,21 @@
 // main.go
 package main
 
-import "flag"
+import (
+    "os"
+    "strconv"
+)
 
 func main() {
-	ipAddr := flag.String("ball", "*", "the characters representing the ball")
-    target := flag.Int("target", 0, "the first to reach this score wins. 0 means the game is infinite")
-    flag.Parse()
-	start(*ipAddr, *target)
+    ipAddr := "*"
+    target := 0
+    if len(os.Args) >= 2 {
+        ipAddr = os.Args[1]
+    }
+    if len(os.Args) >= 3 {
+        if i, err := strconv.Atoi(os.Args[2]); err == nil {
+            target = i
+        }
+    }
+    start(ipAddr, target)
 }
