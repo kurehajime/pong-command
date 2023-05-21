@@ -23,6 +23,7 @@ type state struct {
 	ScorePlayer int
 	ScoreEnemy  int
 	Count       int
+    Target      int
 }
 
 var (
@@ -87,7 +88,7 @@ func drawLine(x, y int, str string) {
 }
 
 // controller
-func controller(s state, kch chan termbox.Key, tch chan bool) {
+func controller(s state, kch chan termbox.Key, tch chan bool) string {
 	var ballMaxTime = 9
 	var ballTime = ballMaxTime
 	var enemyMaxTime = 7
@@ -97,7 +98,7 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 		case key := <-kch: //key event
 			switch key {
 			case termbox.KeyEsc, termbox.KeyCtrlC: //game end
-				return
+				return ""
 			case termbox.KeyArrowUp:
 				s.Player.Move(0, -1)
 				break
@@ -122,6 +123,14 @@ func controller(s state, kch chan termbox.Key, tch chan bool) {
 		default:
 			break
 		}
+        if s.Target > 0 {
+            if s.ScorePlayer >= s.Target {
+                return fmt.Sprintf("You won! The final score was %d-%d", s.ScorePlayer, s.ScoreEnemy)
+            }
+            if s.ScoreEnemy >= s.Target {
+                return fmt.Sprintf("You lost! The final score was %d-%d", s.ScoreEnemy, s.ScorePlayer)
+            }
+        }
 		update(s)
 	}
 }
@@ -196,7 +205,7 @@ func updateStatus(s state) state {
 }
 
 //initState
-func initState(keyword string) state {
+func initState(keyword string, target int) state {
 	s := state{}
 	_width, _height = termbox.Size()
 	s.TopLine = NewCollisionableObject(0, 1, _width, 1, "-")
@@ -206,6 +215,7 @@ func initState(keyword string) state {
 	s.Player = NewCollisionableMovableObject(_width-3, _height/2-2, 2, 4, "|", 0, 0)
 	s.Enemy = NewCollisionableMovableObject(1, _height/2-2, 2, 4, "|", 0, 0)
 	s.Ball = inirBall()
+    s.Target = target
 	for i := range keyword {
 		s.Shadows = append(s.Shadows, NewMovableObject(s.Ball.Point().X, s.Ball.Point().Y, s.Ball.Size().Width, s.Ball.Size().Height, string(keyword[i]), 0, 0))
 	}
@@ -238,20 +248,24 @@ func inirBall() CollisionableMovableObject {
 }
 
 //start
-func start(keyword string) {
+func start(keyword string, target int) {
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
 	}
 
-	s := initState(keyword)
+	s := initState(keyword, target)
 
 	kch := make(chan termbox.Key)
 	tch := make(chan bool)
 	go keyEventLoop(kch)
 	go timerLoop(tch)
-	controller(s, kch, tch)
+    message := controller(s, kch, tch)
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
-	defer termbox.Close()
+	termbox.Close()
+
+    if message != "" {
+        fmt.Println(message)
+    }
 }

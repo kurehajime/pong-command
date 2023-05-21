@@ -28,9 +28,12 @@ cp ./pong /usr/local/bin/pong
 
 ### 3. pong 
 
-Run command.
+Run command. 
 
-`$./pong <IP Address>`
+```sh
+$ ./pong [IP ADDRESS] [TARGET]
+```
+Target is the score to stop the game at. If not provided, the game runs forever.
 
 Start game.
 
