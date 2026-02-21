@@ -16,9 +16,15 @@ Pong-command is a CLI game.
 
 ***Mac OSX / Linux :***
 
-Copy a file into /usr/local/bin 
+If macOS shows a warning like "Apple cannot verify 'pong' is free of malware", remove quarantine attribute first:
 
+```sh
+xattr -d com.apple.quarantine ./pong
 ```
+
+Then copy a file into /usr/local/bin
+
+```sh
 cp ./pong /usr/local/bin/pong
 ```
 
